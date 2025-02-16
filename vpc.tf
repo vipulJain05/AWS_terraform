@@ -22,7 +22,7 @@ resource "aws_subnet" "private-subnet" {
 }
 
 output "pub-sub" {
-  value = keys(aws_subnet.public-subnet)
+  value = aws_subnet.public-subnet[var.nat_region].id
 }
 
 
@@ -42,8 +42,7 @@ resource "aws_eip" "nat-ip" {
 
 resource "aws_nat_gateway" "nat-gateway" {
   allocation_id = aws_eip.nat-ip.id
-  subnet_id     = var.nat_az[count.index]
-  count = 1
+  subnet_id     = aws_subnet.public-subnet[var.nat_region].id
 
   tags = {
     Name = "gw NAT"
@@ -75,18 +74,18 @@ resource "aws_route_table" "private-rt" {
 }
 
 
-# resource "aws_route_table_association" "public-sub-association" {
-#   subnet_id      = aws_subnet.public-subnet[count.index].id
-#   count = var.count_sub
-#   route_table_id = aws_route_table.public-rt.id
+resource "aws_route_table_association" "public-sub-association" {
+  subnet_id      = aws_subnet.public-subnet[each.key].id
+  for_each = var.public_subnet_cidr
+  route_table_id = aws_route_table.public-rt.id
 
-#   depends_on = [ aws_subnet.public-subnet ]
-# }
+  depends_on = [ aws_subnet.public-subnet ]
+}
 
-# resource "aws_route_table_association" "private-sub-association" {
-#   subnet_id      = aws_subnet.private-subnet[count.index].id
-#   count = var.count_sub
-#   route_table_id = aws_route_table.private-rt.id
+resource "aws_route_table_association" "private-sub-association" {
+  subnet_id      = aws_subnet.private-subnet[each.key].id
+  for_each = var.private_subnet_cidr
+  route_table_id = aws_route_table.private-rt.id
 
-#   depends_on = [ aws_subnet.private-subnet ]
-# }
+  depends_on = [ aws_subnet.private-subnet ]
+}

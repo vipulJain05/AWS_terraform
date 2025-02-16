@@ -39,7 +39,7 @@ variable "public_subnet_cidr" {
   }
 }
 
-variable "nat_az" {
-  type = list(string)
-  default = [ "us-east-1" ]
+variable "nat_region" {
+  type = string
+  default = "us-east-1a" 
 }
